@@ -60,12 +60,11 @@ func ShowPlugin() {
 		// 遍历包的文件
 		for _, file := range pkg.Files {
 			// 遍历文件中的所有声明
-			for _, decl := range file.Decls {
+			for i, decl := range file.Decls {
 				// 如果是函数声明
 				if fn, ok := decl.(*ast.FuncDecl); ok {
 					// 打印函数名和类型
-					fmt.Printf("Function Name: %s\n", fn.Name.Name)
-					fmt.Printf("Function Type: %s\n", types.ExprString(fn.Type))
+					fmt.Printf("{%v}[%v] %s %s\n", file.Name, i, fn.Name.Name, types.ExprString(fn.Type))
 				}
 			}
 		}
