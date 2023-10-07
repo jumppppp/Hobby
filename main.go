@@ -173,6 +173,7 @@ func run(args ctype.Args) {
 }
 func showPluginInfo() {
 	fmt.Printf("使用例子：{csvbyname2txt fofa.csv domain fofa.txt}\n解释：将fofa.csv中名为domain列的内容导出为fofa.txt（已去重）\n\n脚本说明：\n原型：csvbycol2txt(fileName string, columnIndex int, outputFileName string)\n原型：csvbyname2txt(fileName string, columnName string, outputFileName string)\n")
+	utils.ShowPlugin()
 }
 
 func main() {
