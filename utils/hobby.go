@@ -64,7 +64,7 @@ func ShowPlugin() {
 				// 如果是函数声明
 				if fn, ok := decl.(*ast.FuncDecl); ok {
 					// 打印函数名和类型
-					fmt.Printf("{%v}[%v] %s %s\n", file.Name, i, fn.Name.Name, types.ExprString(fn.Type))
+					fmt.Printf("\033[032m{%v}[%v]\033[0m \033[033m%s\033[0m \033[031m%s\033[0m\n", file.Name, i, fn.Name.Name, types.ExprString(fn.Type))
 				}
 			}
 		}

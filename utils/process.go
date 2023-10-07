@@ -13,6 +13,7 @@ import (
 	"syscall"
 )
 
+// 寻找pid值并查询状态
 func FindProcessByPID(targetPID int) (*ctype.ProcessDetails, int) {
 	cmd := exec.Command("tasklist", "/FO", "CSV", "/NH", "/FI", fmt.Sprintf("PID eq %d", targetPID))
 	var out bytes.Buffer
@@ -78,6 +79,7 @@ func FindProcessByPID(targetPID int) (*ctype.ProcessDetails, int) {
 	}, 0
 }
 
+// 执行命令并返回pid
 func RunAndGetPID(command string, args ...string) (int, error) {
 	cmd := exec.Command(command, args...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true} // 为了防止命令行窗口的弹出
@@ -90,6 +92,7 @@ func RunAndGetPID(command string, args ...string) (int, error) {
 	return cmd.Process.Pid, nil
 }
 
+// 将多进程的命令进行拆分并返回多条命令
 func SwapThreadCommand(PPID string, thread int, tc string, tout string, command string) (Coms []string, Touts []string, err error) {
 
 	folderName := "./cache"
@@ -150,6 +153,8 @@ func SwapThreadCommand(PPID string, thread int, tc string, tout string, command 
 	// fmt.Println(Coms, Touts)
 	return
 }
+
+// 对多进程产生的文件进行聚合
 func AssembleThreadOut(touts []string, tout string) (err error) {
 	// 创建或打开输出文件
 	outputFile, err := os.Create(tout)
@@ -188,6 +193,8 @@ func AssembleThreadOut(touts []string, tout string) (err error) {
 	writer.Flush()
 	return nil
 }
+
+// 读取文件
 func readLines(fileName string) ([]string, error) {
 	file, err := os.Open(fileName)
 	if err != nil {
@@ -203,6 +210,7 @@ func readLines(fileName string) ([]string, error) {
 	return lines, scanner.Err()
 }
 
+// 写入文件
 func writeLines(lines []string, fileName string) error {
 	file, err := os.Create(fileName)
 	if err != nil {

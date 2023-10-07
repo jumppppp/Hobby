@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"hobby/ctype"
+	"hobby/utils"
 	"time"
 	"unsafe"
 )
@@ -72,21 +74,24 @@ func addDataNameLink(data int, datax int, linkt *link) {
 	current.next = newlink
 }
 func run() {
-	linkt := initLink()
+	linkt := utils.InitLink()
 	for i := 1; i < 10; i++ {
-		addLink(i, linkt)
+		data := ctype.LinkData{UUID: fmt.Sprintf("%v", i), Data: i}
+		utils.AddRetLink(data, linkt)
 	}
-	addIndexLink(1000, 2, linkt)
-	addDataNameLink(100, 1000, linkt)
-	showLink(linkt)
-	size := unsafe.Sizeof(linkt.next)
+	data2 := ctype.LinkData{UUID: "1000", Data: "1000"}
+	utils.AddIndexLink(data2, 2, linkt)
+	data3 := ctype.LinkData{UUID: "100", Data: "100"}
+	utils.AddDataNameLink(data3, "1000", linkt)
+	utils.ShowLink(linkt)
+	size := unsafe.Sizeof(linkt.Next)
 	fmt.Printf("占用的字节数是：%d 字节\n", size)
-	size2 := unsafe.Sizeof(linkt.data)
+	size2 := unsafe.Sizeof(linkt.LinkData)
 	fmt.Printf("占用的字节数是：%d 字节\n", size2)
 	size3 := unsafe.Sizeof(*linkt)
 	fmt.Printf("占用的字节数是：%d 字节\n", size3)
 }
-func main() {
+func go1() {
 	// 创建一个可取消的 Context
 	ctx, cancel := context.WithCancel(context.Background())
 	// 在 Context 中存储键值对
@@ -114,4 +119,7 @@ func main() {
 	time.Sleep(2 * time.Second) // 让 goroutine 运行一段时间
 	cancel()                    // 取消 Context，触发 ctx.Done() 信号
 	time.Sleep(1 * time.Second) // 等待 goroutine 结束
+}
+func main() {
+	run()
 }

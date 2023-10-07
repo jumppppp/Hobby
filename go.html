@@ -58,5 +58,21 @@
 		    {csvbycol2txt ip_fofa_output.csv 1 fofa2.txt}
 		</plugin>
 	</process>
-	
+	<process>
+	    <tag>
+	        3
+	    </tag>
+		<return-mark>ddcsv1</return-mark>
+		<plugin>
+		    {ddcsv ./tools/ 1k 5}
+		</plugin>
+	</process>
+	<process>
+	    <tag>
+	        3
+	    </tag>
+		<plugin>
+		    {sleep 5}
+		</plugin>
+	</process>
 </root>

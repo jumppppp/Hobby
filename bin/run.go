@@ -145,7 +145,6 @@ func Run(args ctype.Args) {
 							_, err := cplugin.ReadCSVbyName(args[0], args[1], args[2])
 							if err != nil {
 								fmt.Printf("[\033[31m脚本执行错误\033[0m]{%v} >> %v\n", pn.Plugin, err)
-								break
 							} else {
 								fmt.Printf("[\033[33m脚本执行结束\033[0m]{%v}\n", pn.Plugin)
 							}
@@ -154,7 +153,6 @@ func Run(args ctype.Args) {
 							_, err := cplugin.ReadCSVbyCol(args[0], column, args[2])
 							if err != nil {
 								fmt.Printf("[\033[31m脚本执行错误\033[0m]{%v} >> %v\n", pn.Plugin, err)
-								break
 							} else {
 								fmt.Printf("[\033[33m脚本执行结束\033[0m]{%v}\n", pn.Plugin)
 							}
@@ -162,6 +160,16 @@ func Run(args ctype.Args) {
 							num, _ := strconv.Atoi(args[0])
 							cplugin.CSleep(num)
 							fmt.Printf("[\033[33m脚本执行结束\033[0m]{%v}\n", pn.Plugin)
+						case "ddcsv":
+							num, _ := strconv.Atoi(args[2])
+							fname, err := cplugin.MonitorDirCsv(args[0], args[1], num)
+							if err != nil {
+								fmt.Printf("[\033[31m脚本执行错误\033[0m]{%v} >> %v\n", pn.Plugin, err)
+
+							} else {
+								fmt.Printf("[\033[33m脚本执行结束\033[0m]{%v}\n", pn.Plugin)
+							}
+							fmt.Println(fname)
 						default:
 							fmt.Printf("[\033[31m脚本不存在\033[0m]{%v}\n", pn.Plugin)
 							return

@@ -24,4 +24,16 @@ type CmdXML struct {
 	Thread        int    `xml:"thread"`
 	ThreadContent string `xml:"thread-content"`
 	ThreadOut     string `xml:"thread-out"`
+	RetMark       string `xml:"return-mark"`
+}
+
+type LinkData struct {
+	UUID   string
+	Data   interface{}
+	OkData string
+}
+type RetLink struct {
+	LinkData LinkData
+	Next     *RetLink
+	Prior    *RetLink
 }
