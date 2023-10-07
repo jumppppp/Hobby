@@ -1,0 +1,62 @@
+<!-- 配置文件说明
+<process> 每个都是一个步骤
+	<tag></tag> 必需值 由大到小依次执行，如果相同则并发
+	<thread></thread> 多开进程（注意是进程）数量（脚本无法使用）搭配<thread-content> | <thread-out>使用
+	<thread-out><thread-out> 目标输出文件地址
+	<thread-content></thread-content> 目标输入文件地址
+	<cmd></cmd> 命令脚本，如果无法执行就填写绝对值路径，也可以用相对路径
+	<plugin></plugin> 自带脚本命令，可以使用-hp查看
+</process>   -->
+<root>
+	<process>
+	    <tag>
+	        1
+	    </tag>
+		<thread>
+			5
+		</thread>
+		<thread-content>
+			./ip.txt
+		</thread-content>
+		<thread-out>
+			./444.txt
+		</thread-out>
+		<cmd>
+		    python g2.py -s ./ip.txt -o ./444.txt
+		</cmd>
+	</process>
+	<process>
+	    <tag>
+	        1
+	    </tag>
+		<thread>
+			1
+		</thread>
+		<thread-content>
+
+		</thread-content>
+		<thread-out>
+
+		</thread-out>
+		<cmd>
+		    python g1.py -t 2
+		</cmd>
+	</process>
+	<process>
+		<tag>
+			2
+		</tag>
+		<plugin>
+			{csvbyname2txt ip_fofa_output.csv domain fofa.txt}
+		</plugin>
+	</process>
+	<process>
+	    <tag>
+	        2
+	    </tag>
+		<plugin>
+		    {csvbycol2txt ip_fofa_output.csv 1 fofa2.txt}
+		</plugin>
+	</process>
+	
+</root>
