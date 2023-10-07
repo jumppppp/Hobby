@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -33,7 +34,7 @@ func MonitorDirCsv(dir string, maxSize string, timeout int) (findName string, er
 	}
 	defer watcher.Close()
 	done := make(chan bool, 1)
-	go func(done chan bool, ftemp *string) {
+	go func(done chan bool, ftemp *string, dir string) {
 		for {
 			select {
 			case event, ok := <-watcher.Events:
@@ -42,7 +43,6 @@ func MonitorDirCsv(dir string, maxSize string, timeout int) (findName string, er
 				}
 				if event.Op&fsnotify.Create == fsnotify.Create {
 					if strings.HasSuffix(event.Name, ".csv") {
-						// fmt.Println("New CSV file detected:", event.Name)
 						// 检查文件大小
 						fileInfo, err := os.Stat(event.Name)
 						if err != nil {
@@ -52,7 +52,8 @@ func MonitorDirCsv(dir string, maxSize string, timeout int) (findName string, er
 						if fileInfo.Size() > maxSize64 {
 							// fmt.Println("File is larger than limit:", event.Name)
 							// 在这里，你可以添加处理大于限制的 CSV 文件的代码
-							*ftemp = event.Name
+							filename := filepath.Base(event.Name)
+							*ftemp = dir + filename
 							done <- true
 							return
 						}
@@ -65,7 +66,7 @@ func MonitorDirCsv(dir string, maxSize string, timeout int) (findName string, er
 				log.Println("error:", err)
 			}
 		}
-	}(done, ftemp)
+	}(done, ftemp, dir)
 	go func(timeout int) {
 		time.Sleep(time.Duration(timeout) * time.Second)
 		done <- false

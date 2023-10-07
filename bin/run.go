@@ -163,13 +163,13 @@ func Run(args ctype.Args) {
 						case "ddcsv":
 							num, _ := strconv.Atoi(args[2])
 							fname, err := cplugin.MonitorDirCsv(args[0], args[1], num)
+
 							if err != nil {
 								fmt.Printf("[\033[31m脚本执行错误\033[0m]{%v} >> %v\n", pn.Plugin, err)
 
 							} else {
-								fmt.Printf("[\033[33m脚本执行结束\033[0m]{%v}\n", pn.Plugin)
+								fmt.Printf("[\033[33m脚本执行结束\033[0m]{%v} >> %v(%v)\n", pn.Plugin, pn.RetMark, fname)
 							}
-							fmt.Println(fname)
 						default:
 							fmt.Printf("[\033[31m脚本不存在\033[0m]{%v}\n", pn.Plugin)
 							return
