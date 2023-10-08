@@ -1,6 +1,7 @@
 package bin
 
 import (
+	"fmt"
 	"hobby/cplugin"
 	"hobby/ctype"
 	"hobby/utils"
@@ -358,9 +359,7 @@ func DdProcessRunStatByLink(UUID string, OutRunStat chan *ctype.ProcessRunStat, 
 		}
 		tempLink := utils.SelectLinkDatabyUUID(UUID, Linkt)
 		// 第一次
-		if tempLink ==nil{
-			continue
-		}
+		fmt.Println(tempLink.LinkData)
 		value1, _ := tempLink.LinkData.Data.(int)
 		path1 := tempLink.LinkData.OkData
 		size1, modTime1, err := utils.GetFileInfo(path1)

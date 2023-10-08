@@ -358,7 +358,7 @@ func DdProcessRunStatByLink(UUID string, OutRunStat chan *ctype.ProcessRunStat, 
 		}
 		tempLink := utils.SelectLinkDatabyUUID(UUID, Linkt)
 		// 第一次
-		if tempLink ==nil{
+		if tempLink.Prior ==nil{
 			continue
 		}
 		value1, _ := tempLink.LinkData.Data.(int)
