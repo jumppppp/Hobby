@@ -21,7 +21,7 @@ func AddRetLink(data ctype.LinkData, linkt *ctype.RetLink) {
 }
 
 func ShowLink(linkt *ctype.RetLink) {
-	sdata := linkt.Next
+	sdata := linkt
 	for sdata != nil {
 
 		fmt.Printf("%p,%v\n", sdata, sdata)

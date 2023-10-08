@@ -2,6 +2,7 @@ package cplugin
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -14,6 +15,35 @@ import (
 
 func CSleep(num int) {
 	time.Sleep(time.Duration(num) * time.Second)
+}
+func CLogPrint(cmd string, args ...string) {
+	// 确保目标目录存在
+	dir := "./result"
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		os.MkdirAll(dir, 0755)
+	}
+
+	// 打开文件，如果不存在则创建
+	filePath := filepath.Join(dir, "out.txt")
+	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+	defer file.Close()
+
+	// 创建多重写入器
+	multi := io.MultiWriter(file, os.Stdout)
+
+	// 获取当前时间并格式化
+	currentTime := time.Now().Format("2006-01-02 15:04:05")
+
+	// 写入日期和参数
+	fmt.Fprintf(multi, "{%s}[%v] >> ", currentTime, cmd)
+	for _, arg := range args {
+		fmt.Fprintf(multi, "%s ", arg)
+	}
+	fmt.Fprintln(multi) // 添加换行符
 }
 func MonitorDirCsv(dir string, maxSize string, timeout int) (findName string, err error) {
 	var maxSizei int
