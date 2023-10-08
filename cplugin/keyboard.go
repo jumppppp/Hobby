@@ -18,7 +18,7 @@ func KeyBoardMain(OutKey chan *ctype.KeyBoardData, done chan bool) {
 
 	defer keyboard.Close()
 
-	utils.LogPf("[+]Press any key to see the key code. Press Ctrl+Q to quit.\n")
+	// utils.LogPf("[+]Press any key to see the key code. Press Ctrl+Q to quit.\n")
 
 	for {
 		char, key, err := keyboard.GetKey()
