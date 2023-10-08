@@ -315,8 +315,11 @@ func LinkShell(
 			switch control {
 			default:
 				tempLink := utils.SelectLinkDatabyUUID(c1, LinkT)
+				// 监测nil，不能插入空，否则管道阻塞
 				if tempLink != nil {
 					outLink <- tempLink
+				} else {
+					outLink <- LinkT
 				}
 
 			}
@@ -332,6 +335,8 @@ func LinkShell(
 				tempLink := utils.SelectLinkDatabyUUID(c2, LinkT)
 				if tempLink != nil {
 					outLinkData <- &tempLink.LinkData
+				} else {
+					outLinkData <- &ctype.LinkData{}
 				}
 
 			}
