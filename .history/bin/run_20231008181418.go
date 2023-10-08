@@ -197,17 +197,14 @@ func ProcessRun(
 	pid, SOut, err := utils.RunAndGetPID(command, args...)
 	// 处理程序的输出问题
 	go utils.HandelSout(SOut, pid, PPID, &DDone)
-	// 将信息存到link
-	go DdProcessRunStatByLink(PPID, ctype.OutRunStat, Dpt, &DDone)
-	// 处理存到管道的
-	go HandleOutRunStat(ctype.OutRunStat, &DDone)
 
 	if err != nil {
 		// 打印错误信息
 		utils.LogPf("[\033[31mError\033[0m]{%v} >> %v\n", Cmdtext, err)
 		return
 	}
-
+	go DdProcessRunStatByLink(PPID, ctype.OutRunStat, Dpt, &DDone)
+	go HandleOutRunStat(ctype.OutRunStat, &DDone)
 	for {
 		info, n := utils.FindProcessByPID(pid)
 		if n == 0 {

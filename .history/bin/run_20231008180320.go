@@ -197,10 +197,6 @@ func ProcessRun(
 	pid, SOut, err := utils.RunAndGetPID(command, args...)
 	// 处理程序的输出问题
 	go utils.HandelSout(SOut, pid, PPID, &DDone)
-	// 将信息存到link
-	go DdProcessRunStatByLink(PPID, ctype.OutRunStat, Dpt, &DDone)
-	// 处理存到管道的
-	go HandleOutRunStat(ctype.OutRunStat, &DDone)
 
 	if err != nil {
 		// 打印错误信息
@@ -213,7 +209,8 @@ func ProcessRun(
 		if n == 0 {
 			utils.LogPf("\033[34m(进程%v)\033[0m[\033[32m执行中...\033[0m]{%v} >> %v\n", index, Cmdtext, *info)
 			// 在运行了，但是输出文件长度一直没有区别
-
+			go DdProcessRunStatByLink(PPID, ctype.OutRunStat, Dpt, &DDone)
+			go HandleOutRunStat(ctype.OutRunStat, &DDone)
 		} else if n > -5 {
 			utils.LogPf("\033[34m(进程%v)\033[0m[\033[33m执行结束\033[0m]{%v}\n", index, Cmdtext)
 			DDone = true
