@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"hobby/ctype"
 )
 
@@ -24,13 +23,13 @@ func ShowLink(linkt *ctype.RetLink) {
 	sdata := linkt
 	for sdata != nil {
 
-		fmt.Printf("%p,%v\n", sdata, sdata)
+		LogPf("%p,%v\n", sdata, sdata)
 		sdata = sdata.Next
 	}
 }
 func AddIndexLink(data ctype.LinkData, index int, linkt *ctype.RetLink) {
 	if index <= 0 {
-		fmt.Println("Index should be a positive integer")
+		LogPf("[-]Index should be a positive integer")
 		return
 	}
 	current := linkt

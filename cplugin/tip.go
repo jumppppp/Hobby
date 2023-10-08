@@ -2,6 +2,7 @@ package cplugin
 
 import (
 	"fmt"
+	"hobby/utils"
 	"io"
 	"log"
 	"os"
@@ -39,9 +40,9 @@ func CLogPrint(cmd string, args ...string) {
 	currentTime := time.Now().Format("2006-01-02 15:04:05")
 
 	// 写入日期和参数
-	fmt.Fprintf(multi, "{%s}[%v] >> ", currentTime, cmd)
+	fmt.Fprintf(multi, "\t**HOBBY**(%s)[%v] >>", currentTime, cmd)
 	for _, arg := range args {
-		fmt.Fprintf(multi, "%s ", arg)
+		fmt.Fprintf(multi, " %s |", arg)
 	}
 	fmt.Fprintln(multi) // 添加换行符
 }
@@ -76,11 +77,10 @@ func MonitorDirCsv(dir string, maxSize string, timeout int) (findName string, er
 						// 检查文件大小
 						fileInfo, err := os.Stat(event.Name)
 						if err != nil {
-							fmt.Println("Error stating file:", err)
+							utils.LogPf("[-]Error stating file: %v\n", err)
 							continue
 						}
 						if fileInfo.Size() > maxSize64 {
-							// fmt.Println("File is larger than limit:", event.Name)
 							// 在这里，你可以添加处理大于限制的 CSV 文件的代码
 							filename := filepath.Base(event.Name)
 							*ftemp = dir + filename

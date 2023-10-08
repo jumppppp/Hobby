@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"hobby/bin"
 	"hobby/ctype"
 	"hobby/utils"
 	"time"
@@ -122,5 +121,4 @@ func go1() {
 	time.Sleep(1 * time.Second) // 等待 goroutine 结束
 }
 func main() {
-	bin.MyDaemon()
 }
