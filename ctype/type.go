@@ -3,6 +3,7 @@ package ctype
 type Args struct {
 	FlushTime int
 	HobbyPath string
+	Ddprocess int
 }
 type ProcessDetails struct {
 	PID      int
@@ -40,4 +41,11 @@ type RetLink struct {
 type KeyBoardData struct {
 	Rune string
 	Key  int
+}
+type ProcessRunStat struct {
+	PID        int
+	UUID       string
+	Path       string
+	ChangeTime string
+	Length     int
 }

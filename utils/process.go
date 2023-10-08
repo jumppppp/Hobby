@@ -5,12 +5,16 @@ import (
 	"bytes"
 	"fmt"
 	"hobby/ctype"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
+
+	uuid "github.com/satori/go.uuid"
 )
 
 // 寻找pid值并查询状态
@@ -80,44 +84,26 @@ func FindProcessByPID(targetPID int) (*ctype.ProcessDetails, int) {
 }
 
 // 执行命令并返回pid
-func RunAndGetPID(command string, args ...string) (int, error) {
+func RunAndGetPID(command string, args ...string) (int, io.ReadCloser, error) {
 	cmd := exec.Command(command, args...)
+	// 创建一个管道用于读取命令的输出
+	output, err := cmd.StdoutPipe()
+	if err != nil {
+		return 0, nil, err
+	}
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true} // 为了防止命令行窗口的弹出
 
-	err := cmd.Start() // Start command and return immediately without waiting for it to finish
+	err = cmd.Start() // Start command and return immediately without waiting for it to finish
 	if err != nil {
-		return 0, err
+		return 0, nil, err
 	}
 
-	return cmd.Process.Pid, nil
+	return cmd.Process.Pid, output, nil
 }
 
 // 将多进程的命令进行拆分并返回多条命令
 func SwapThreadCommand(PPID string, thread int, tc string, tout string, command string) (Coms []string, Touts []string, err error) {
 
-	folderName := "./cache"
-
-	// create folder
-	if _, err = os.Stat(folderName); os.IsNotExist(err) {
-		// Folder does not exist, create it
-		err = os.Mkdir(folderName, 0755)
-		if err != nil {
-			// Handle error
-
-			return nil, nil, fmt.Errorf("Failed to create directory: %v\n", err)
-		}
-	}
-	folderName2 := folderName + "/" + PPID
-	if _, err = os.Stat(folderName2); os.IsNotExist(err) {
-		// Folder does not exist, create it
-		err = os.Mkdir(folderName2, 0755)
-		if err != nil {
-			// Handle error
-
-			return nil, nil, fmt.Errorf("Failed to create directory: %v\n", err)
-		}
-	}
-	path := fmt.Sprintf("%v/", folderName2)
 	// fmt.Println(path)
 	lines, err := ReadLines(tc)
 	if err != nil {
@@ -139,13 +125,14 @@ func SwapThreadCommand(PPID string, thread int, tc string, tout string, command 
 			end = len(lines)
 		}
 
-		wtcFileName := path + tcPrefix + "_" + strconv.Itoa(i+1) + tcSuffix
-		wtoFileName := path + toPrefix + "_" + strconv.Itoa(i+1) + toSuffix
+		wtcFileName := "./cache/" + PPID + "/" + tcPrefix + "_" + strconv.Itoa(i+1) + tcSuffix
+		ccname := tcPrefix + "_" + strconv.Itoa(i+1) + tcSuffix
+		wtoFileName := "./cache/" + PPID + "/" + toPrefix + "_" + strconv.Itoa(i+1) + toSuffix
 		Touts = append(Touts, wtoFileName)
 		NewCom := strings.ReplaceAll(command, tc, wtcFileName)
 		NewCom = strings.ReplaceAll(NewCom, tout, wtoFileName)
 		Coms = append(Coms, NewCom)
-		err := WriteLines(lines[start:end], wtcFileName, true)
+		err := WriteCacheByUid(PPID, lines[start:end], ccname, true, false)
 		if err != nil {
 			return nil, nil, fmt.Errorf("Error writing to file: %v - %v", wtcFileName, err)
 		}
@@ -216,6 +203,11 @@ func WriteLines(lines []string, fileName string, _n bool) error {
 	if err != nil {
 		return err
 	}
+	defer func() {
+		file.Sync()
+		file.Close()
+
+	}()
 	defer file.Close()
 
 	writer := bufio.NewWriter(file)
@@ -228,4 +220,102 @@ func WriteLines(lines []string, fileName string, _n bool) error {
 
 	}
 	return writer.Flush()
+}
+func GetUid() string {
+	u1 := uuid.NewV4()
+	// 将UUID转换为字符串并获取前16个字符
+	return u1.String()[:16]
+}
+
+// _n换行，_a追加
+func WriteCacheByUid(Uid string, data []string, filename string, _n bool, _a bool) (err error) {
+	folderName := "./cache"
+
+	// create folder
+	if _, err = os.Stat(folderName); os.IsNotExist(err) {
+		// Folder does not exist, create it
+		err = os.Mkdir(folderName, 0755)
+		if err != nil {
+			// Handle error
+
+			return fmt.Errorf("Failed to create directory: %v\n", err)
+		}
+	}
+	folderName2 := folderName + "/" + Uid
+	if _, err = os.Stat(folderName2); os.IsNotExist(err) {
+		// Folder does not exist, create it
+		err = os.Mkdir(folderName2, 0755)
+		if err != nil {
+			// Handle error
+
+			return fmt.Errorf("Failed to create directory: %v\n", err)
+		}
+	}
+	path := fmt.Sprintf("%v/%v", folderName2, filename)
+	if _a {
+		err = WriteAppendLines(data, path, _n)
+	} else {
+		err = WriteLines(data, path, _n)
+	}
+
+	if err != nil {
+		return fmt.Errorf("Error writing to file: %v - %v", path, err)
+	}
+	return
+}
+func WriteAppendLines(lines []string, fileName string, _n bool) error {
+	// 使用 os.OpenFile 以追加模式打开文件，如果文件不存在，则创建文件
+	file, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		file.Sync()
+		file.Close()
+
+	}()
+	defer file.Close()
+
+	writer := bufio.NewWriter(file)
+	for _, line := range lines {
+		if _n {
+			fmt.Fprintln(writer, line)
+		} else {
+			fmt.Fprintf(writer, "%s", line)
+		}
+	}
+	return writer.Flush()
+}
+
+// 给出指定文件的大小和修改时间
+func GetFileInfo(filename string) (int64, time.Time, error) {
+	fileInfo, err := os.Stat(filename)
+	if err != nil {
+		return 0, time.Time{}, err // returning zero value of time.Time if there is an error
+	}
+	return fileInfo.Size(), fileInfo.ModTime(), nil
+}
+
+// 处理程序的输出功能
+func HandelSout(Sout io.ReadCloser, Pid int, PPID string, DDone *bool) {
+	// 读取命令的输出
+	buf := make([]byte, 1024)
+	outname := fmt.Sprintf("%v.txt", Pid)
+	ctype.InLinkData <- &ctype.LinkData{UUID: PPID, Data: Pid, OkData: fmt.Sprintf("./cache/%v/%v", PPID, outname)}
+	for {
+		if *DDone {
+			return
+		}
+		n, err := Sout.Read(buf)
+		if err != nil {
+			continue
+		}
+		if n > 0 {
+			err = WriteCacheByUid(PPID, []string{string(buf[:n])}, outname, false, true)
+			if err != nil {
+				LogPf("Error writing to file: %v - %v\n", outname, err)
+			}
+		}
+	}
+
 }

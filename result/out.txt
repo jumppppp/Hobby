@@ -1,0 +1,4 @@
+	**HOBBY**(2023-10-08 14:49:34)[LogPrint $ddcsv1$ hello] >>  | hello |
+	**HOBBY**(2023-10-08 15:18:57)[LogPrint $ddcsv1$ hello] >>  | hello |
+	**HOBBY**(2023-10-08 15:31:38)[LogPrint $ddcsv1$ hello] >>  | hello |
+	**HOBBY**(2023-10-08 15:33:21)[LogPrint $ddcsv1$ hello] >>  | hello |

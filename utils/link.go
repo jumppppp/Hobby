@@ -5,7 +5,7 @@ import (
 )
 
 func InitLink() *ctype.RetLink {
-	return &ctype.RetLink{LinkData: ctype.LinkData{}, Next: nil, Prior: nil}
+	return &ctype.RetLink{LinkData: ctype.LinkData{UUID: "HEAD"}, Next: nil, Prior: nil}
 
 }
 func AddRetLink(data ctype.LinkData, linkt *ctype.RetLink) {
@@ -58,13 +58,13 @@ func AddDataNameLink(data ctype.LinkData, UUID string, linkt *ctype.RetLink) {
 	current.Next = newlink // 设置当前节点的Next为新节点
 
 }
-func SelectLinkDatabyUUID(UUID string, linkt *ctype.RetLink) ctype.LinkData {
+func SelectLinkDatabyUUID(UUID string, linkt *ctype.RetLink) *ctype.RetLink {
 	current := linkt
 	for current.Next != nil && current.LinkData.UUID != UUID {
 		current = current.Next
 	}
 	if current.Next == nil {
-		return linkt.LinkData
+		return nil
 	}
-	return current.LinkData
+	return current
 }

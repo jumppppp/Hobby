@@ -40,6 +40,9 @@ func Run(args ctype.Args) {
 	go cplugin.HandleKeyboardData(OutBoardData)
 
 	// 2 运行链表储存脚本返回值
+	InLinkShell := ctype.InLinkShell
+	OutLinkShell := ctype.OutLinkShell
+	ControlMain := ctype.ControlMain
 	InLinkData := ctype.InLinkData
 	OutLinkData := ctype.OutLinkData
 	Govern := ctype.Govern
@@ -47,11 +50,14 @@ func Run(args ctype.Args) {
 		close(InLinkData)
 		close(OutLinkData)
 		close(Govern)
+		close(InLinkShell)
+		close(OutLinkShell)
+		close(ControlMain)
 	}()
-	go MyGoLink(InLinkData, OutLinkData, Govern)
+	go LinkShell(InLinkShell, OutLinkShell, ControlMain, InLinkData, OutLinkData, Govern)
 	//
 	// 清理屏幕
-	go ClearSrceen(args.FlushTime * 10)
+	// go ClearSrceen(args.FlushTime * 10)
 
 	// 3 依次运行配置文件中的内容
 	wg := &sync.WaitGroup{}
@@ -64,9 +70,11 @@ func Run(args ctype.Args) {
 			// 外置程序运行
 			if pn.Command != "" {
 				//多进程
+				PPID := pn.PPID
 				if pn.Thread > 1 {
 					if pn.ThreadContent != "" && pn.ThreadOut != "" {
 						Coms, Touts, err := utils.SwapThreadCommand(pn.PPID, pn.Thread, pn.ThreadContent, pn.ThreadOut, pn.Command)
+
 						if err != nil {
 							utils.LogPf("[\033[31m进程转换错误\033[0m]{%v} >> %v\n", pn.Command, err)
 							return
@@ -75,7 +83,7 @@ func Run(args ctype.Args) {
 						for index, pn := range Coms {
 							wg.Add(1)
 							// 多进程
-							go ManyProcessRun(wg, mt, pn, args.FlushTime, index, &WorkCount, OutLinkData, Govern)
+							go ProcessRun(wg, mt, PPID, pn, args.FlushTime, index, &WorkCount, OutLinkData, Govern, args.Ddprocess)
 						}
 						wg.Add(1)
 						// 结果聚合
@@ -89,7 +97,7 @@ func Run(args ctype.Args) {
 				} else {
 					wg.Add(1)
 					// 单进程
-					go OneProcessRun(wg, mt, pn, args.FlushTime, OutLinkData, Govern)
+					go ProcessRun(wg, mt, PPID, pn, args.FlushTime, -100, nil, OutLinkData, Govern, args.Ddprocess)
 				}
 				// 脚本运行
 			} else if pn.Plugin != "" {
@@ -133,94 +141,85 @@ func ManyProcessRetCount(wg *sync.WaitGroup, WorkCount *int, pn ctype.CmdXML, t 
 
 }
 
-// 多进程执行
-func ManyProcessRun(wg *sync.WaitGroup, mt *sync.Mutex, pn string, t int, index int, WorkCount *int, outLinkData chan *ctype.LinkData, govern chan string) {
-
-	defer func() {
-		*WorkCount -= 1
-		wg.Done()
-
-	}()
-	parts := strings.Fields(pn)
-
-	command := parts[0]
-	args := parts[1:]
-
-	for i, arg := range args {
-		if strings.HasPrefix(arg, "$") && strings.HasSuffix(arg, "$") {
-			// 如果字符串以$开始并以$结束，就提取中间的值
-			inner := strings.TrimPrefix(arg, "$")
-			inner = strings.TrimSuffix(inner, "$")
-			mt.Lock()
-			govern <- inner
-			RetLink := <-outLinkData
-			mt.Unlock()
-			// 输出或使用替换后的值
-			args[i] = RetLink.OkData
-
-		}
-	}
-
-	pid, err := utils.RunAndGetPID(command, args...)
-	if err != nil {
-		utils.LogPf("\033[34m(进程%v)\033[0m[\033[31mError\033[0m]{%v} >> %v\n", index, pn, err)
-	}
-	for {
-		info, n := utils.FindProcessByPID(pid)
-		if n == 0 {
-			utils.LogPf("\033[34m(进程%v)\033[0m[\033[32m执行中...\033[0m]{%v} >> %v\n", index, pn, *info)
-
-		} else if n > -5 {
-			utils.LogPf("\033[34m(进程%v)\033[0m[\033[33m执行结束\033[0m]{%v}\n", index, pn)
-
-			break
-		} else {
-			utils.LogPf("\033[34m(进程%v)\033[0m[\033[31m执行错误\033[0m]{%v} >> %v\n", index, pn, n)
-			break
-		}
-		time.Sleep(time.Second * time.Duration(t))
-	}
-}
-
-// 单进程执行
-func OneProcessRun(wg *sync.WaitGroup, mt *sync.Mutex, pn ctype.CmdXML, t int, outLinkData chan *ctype.LinkData, govern chan string) {
+// 程序执行
+func ProcessRun(
+	wg *sync.WaitGroup,
+	mt *sync.Mutex,
+	PPID string,
+	pn interface{}, // 可以是string或者ctype.CmdXML
+	t int,
+	index int, // 对于OneProcessRun为nil
+	WorkCount *int, // 对于OneProcessRun为nil
+	outLinkData chan *ctype.LinkData,
+	govern chan string,
+	Dpt int,
+) {
 
 	defer wg.Done()
-	parts := strings.Fields(pn.Command)
+	if WorkCount != nil {
+		defer func() {
+			*WorkCount -= 1
+		}()
+	}
 
-	command := parts[0]
-	args := parts[1:]
+	var command string
+	var args []string
+	var Cmdtext string
+	switch v := pn.(type) {
+	case string:
+		parts := strings.Fields(v)
+		command = parts[0]
+		args = parts[1:]
+		Cmdtext = v
+	case ctype.CmdXML:
+		parts := strings.Fields(v.Command)
+		command = parts[0]
+		args = parts[1:]
+		Cmdtext = v.Command
+	}
+
+	// 处理参数，替换其中的特定值
 	for i, arg := range args {
 		if strings.HasPrefix(arg, "$") && strings.HasSuffix(arg, "$") {
-			// 如果字符串以$开始并以$结束，就提取中间的值
 			inner := strings.TrimPrefix(arg, "$")
 			inner = strings.TrimSuffix(inner, "$")
 			mt.Lock()
 			govern <- inner
 			RetLink := <-outLinkData
 			mt.Unlock()
-			// 输出或使用替换后的值
 			args[i] = RetLink.OkData
-
 		}
 	}
 
-	pid, err := utils.RunAndGetPID(command, args...)
+	var DDone bool
+	DDone = false
+
+	pid, SOut, err := utils.RunAndGetPID(command, args...)
+	// 处理程序的输出问题
+	go utils.HandelSout(SOut, pid, PPID, &DDone)
+
 	if err != nil {
-		utils.LogPf("[\033[31mError\033[0m]{%v} >> %v\n", pn.Command, err)
+		// 打印错误信息
+		utils.LogPf("[\033[31mError\033[0m]{%v} >> %v\n", Cmdtext, err)
+		return
 	}
+
 	for {
 		info, n := utils.FindProcessByPID(pid)
 		if n == 0 {
-			utils.LogPf("[\033[32m执行中...\033[0m]{%v} >> %v\n", pn.Command, *info)
-
+			utils.LogPf("\033[34m(进程%v)\033[0m[\033[32m执行中...\033[0m]{%v} >> %v\n", index, Cmdtext, *info)
+			// 在运行了，但是输出文件长度一直没有区别
+			go DdProcessRunStatByLink(PPID, ctype.OutRunStat, Dpt, &DDone)
+			go HandleOutRunStat(ctype.OutRunStat, &DDone)
 		} else if n > -5 {
-			utils.LogPf("[\033[33m执行结束\033[0m]{%v}\n", pn.Command)
-
+			utils.LogPf("\033[34m(进程%v)\033[0m[\033[33m执行结束\033[0m]{%v}\n", index, Cmdtext)
+			DDone = true
 			break
 		} else {
-			utils.LogPf("[\033[31m执行错误\033[0m]{%v} >> %v\n", pn.Command, n)
+			utils.LogPf("\033[34m(进程%v)\033[0m[\033[31m执行错误\033[0m]{%v} >> %v\n", index, Cmdtext, n)
+			DDone = true
 			break
+
 		}
 		time.Sleep(time.Second * time.Duration(t))
 	}
@@ -296,26 +295,110 @@ func PluginRun(wg *sync.WaitGroup, mt *sync.Mutex, pn ctype.CmdXML, t int, inLin
 	}
 }
 
-// 链表保存脚本返回值
-func MyGoLink(inLinkData chan *ctype.LinkData, outLinkData chan *ctype.LinkData, govern chan string) {
-	LinkT := utils.InitLink()
+// 链表内核
+func LinkShell(
+	inLink chan *ctype.RetLink,
+	outLink chan *ctype.RetLink,
+	control chan string,
+	inLinkData chan *ctype.LinkData,
+	outLinkData chan *ctype.LinkData,
+	govern chan string) {
 
+	LinkT := utils.InitLink()
 	for {
 		select {
 		// 写入数据
+		case link := <-inLink:
+			utils.AddRetLink(link.LinkData, LinkT)
+
+		case c1 := <-control:
+			switch control {
+			default:
+				tempLink := utils.SelectLinkDatabyUUID(c1, LinkT)
+				if tempLink != nil {
+					outLink <- tempLink
+				}
+
+			}
 		case ldata := <-inLinkData:
 			utils.AddRetLink(*ldata, LinkT)
-		case control := <-govern:
-			switch control {
+		case c2 := <-govern:
+			switch c2 {
 			case "exit":
 				syscall.Exit(1)
 			case "show":
 				utils.ShowLink(LinkT)
 			default:
-				tempLink := utils.SelectLinkDatabyUUID(control, LinkT)
-				outLinkData <- &tempLink
+				tempLink := utils.SelectLinkDatabyUUID(c2, LinkT)
+				if tempLink != nil {
+					outLinkData <- &tempLink.LinkData
+				}
+
 			}
 		}
-		time.Sleep(1 * time.Second)
+		time.Sleep(100 * time.Millisecond)
 	}
+}
+
+// 监测程序运行状态使用链表
+func DdProcessRunStatByLink(UUID string, OutRunStat chan *ctype.ProcessRunStat, num int, DDone *bool) {
+	ctype.ControlMain <- "HEAD"
+	Linkt := <-ctype.OutLinkShell
+	for {
+		if *DDone {
+			return
+		}
+		tempLink := utils.SelectLinkDatabyUUID(UUID, Linkt)
+		// 第一次
+		value1, _ := tempLink.LinkData.Data.(int)
+		path1 := tempLink.LinkData.OkData
+		size1, modTime1, err := utils.GetFileInfo(path1)
+		if err != nil {
+			// utils.LogPf("[-]DdProcessRunStatByLink Error: %v\n", err)
+			continue
+		}
+		tempRunStat1 := &ctype.ProcessRunStat{
+			PID:        value1,
+			UUID:       UUID,
+			Path:       path1,
+			ChangeTime: modTime1.Format("2006-01-02 15:04:05"),
+			Length:     int(size1),
+		}
+		time.Sleep(time.Duration(num) * time.Second)
+		// 第二次
+		value2, _ := tempLink.LinkData.Data.(int)
+		path2 := tempLink.LinkData.OkData
+		size2, modTime2, err := utils.GetFileInfo(path1)
+		if err != nil {
+			// utils.LogPf("[-]DdProcessRunStatByLink Error: %v\n", err)
+			continue
+		}
+		tempRunStat2 := &ctype.ProcessRunStat{
+			PID:        value2,
+			UUID:       UUID,
+			Path:       path2,
+			ChangeTime: modTime2.Format("2006-01-02 15:04:05"),
+			Length:     int(size2),
+		}
+		// 发送出去
+		OutRunStat <- tempRunStat1
+		OutRunStat <- tempRunStat2
+		time.Sleep(time.Duration(num) * time.Second)
+	}
+}
+func HandleOutRunStat(OutRunStat chan *ctype.ProcessRunStat, DDone *bool) {
+	for {
+		if *DDone {
+			return
+		}
+		select {
+		case RunStat := <-OutRunStat:
+			utils.LogPf("\033[032mPID:[%v]\033[0m\nUUID:[%v]\nPath:[%v]\nModify:[%v]\nLength:[%v]\n\n",
+				RunStat.PID, RunStat.UUID, RunStat.Path, RunStat.ChangeTime, RunStat.Length)
+		default:
+
+		}
+		time.Sleep(time.Second)
+	}
+
 }
