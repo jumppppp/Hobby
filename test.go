@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"hobby/cplugin"
 	"hobby/ctype"
 	"hobby/utils"
 	"time"
@@ -121,4 +122,16 @@ func go1() {
 	time.Sleep(1 * time.Second) // 等待 goroutine 结束
 }
 func main() {
+	OutBoardData := make(chan *ctype.KeyBoardData, 128)
+	done := make(chan bool, 1)
+	go cplugin.KeyBoardMain(OutBoardData, done)
+	for {
+		select {
+		case <-done:
+			return
+		default:
+			fmt.Println(<-OutBoardData)
+		}
+
+	}
 }

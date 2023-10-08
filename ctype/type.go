@@ -37,3 +37,7 @@ type RetLink struct {
 	Next     *RetLink
 	Prior    *RetLink
 }
+type KeyBoardData struct {
+	Rune string
+	Key  int
+}

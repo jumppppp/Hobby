@@ -26,17 +26,37 @@ func Run(args ctype.Args) {
 		tags = append(tags, tag)
 	}
 	sort.Ints(tags)
-	// 2 运行链表储存脚本返回值
-	InLinkData := make(chan *ctype.LinkData, 1)
-	OutLinkData := make(chan *ctype.LinkData, 1)
-	Govern := make(chan string, 1)
-	go MyGoLink(InLinkData, OutLinkData, Govern)
 
+	// 初始化日志文件
+	utils.Log_init()
+	OutBoardData := ctype.OutBoardData
+	KeyBoardDone := ctype.KeyBoardDone
+	defer func() {
+		close(OutBoardData)
+		close(KeyBoardDone)
+	}()
+	// 键盘 监听
+	go cplugin.KeyBoardMain(OutBoardData, KeyBoardDone)
+	go cplugin.HandleKeyboardData(OutBoardData)
+
+	// 2 运行链表储存脚本返回值
+	InLinkData := ctype.InLinkData
+	OutLinkData := ctype.OutLinkData
+	Govern := ctype.Govern
+	defer func() {
+		close(InLinkData)
+		close(OutLinkData)
+		close(Govern)
+	}()
+	go MyGoLink(InLinkData, OutLinkData, Govern)
+	//
 	// 清理屏幕
 	go ClearSrceen(args.FlushTime * 10)
+
 	// 3 依次运行配置文件中的内容
 	wg := &sync.WaitGroup{}
 	mt := &sync.Mutex{}
+
 	for _, tag := range tags {
 		processes := hobby[tag]
 		// 循环每个process
@@ -264,7 +284,7 @@ func PluginRun(wg *sync.WaitGroup, mt *sync.Mutex, pn ctype.CmdXML, t int, inLin
 				utils.LogPf("[\033[33m脚本执行结束\033[0m]{%v} >> %v(%v)\n", pn.Plugin, pn.RetMark, fname)
 			}
 			// test
-			govern <- "show"
+			// govern <- "show"
 
 		case "logprint":
 			cplugin.CLogPrint(pn.Plugin, args...)

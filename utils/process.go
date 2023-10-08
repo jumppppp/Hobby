@@ -119,7 +119,7 @@ func SwapThreadCommand(PPID string, thread int, tc string, tout string, command 
 	}
 	path := fmt.Sprintf("%v/", folderName2)
 	// fmt.Println(path)
-	lines, err := readLines(tc)
+	lines, err := ReadLines(tc)
 	if err != nil {
 
 		return nil, nil, fmt.Errorf("Error reading the file: %v\n", err)
@@ -145,7 +145,7 @@ func SwapThreadCommand(PPID string, thread int, tc string, tout string, command 
 		NewCom := strings.ReplaceAll(command, tc, wtcFileName)
 		NewCom = strings.ReplaceAll(NewCom, tout, wtoFileName)
 		Coms = append(Coms, NewCom)
-		err := writeLines(lines[start:end], wtcFileName)
+		err := WriteLines(lines[start:end], wtcFileName, true)
 		if err != nil {
 			return nil, nil, fmt.Errorf("Error writing to file: %v - %v", wtcFileName, err)
 		}
@@ -195,7 +195,7 @@ func AssembleThreadOut(touts []string, tout string) (err error) {
 }
 
 // 读取文件
-func readLines(fileName string) ([]string, error) {
+func ReadLines(fileName string) ([]string, error) {
 	file, err := os.Open(fileName)
 	if err != nil {
 		return nil, err
@@ -211,7 +211,7 @@ func readLines(fileName string) ([]string, error) {
 }
 
 // 写入文件
-func writeLines(lines []string, fileName string) error {
+func WriteLines(lines []string, fileName string, _n bool) error {
 	file, err := os.Create(fileName)
 	if err != nil {
 		return err
@@ -220,7 +220,12 @@ func writeLines(lines []string, fileName string) error {
 
 	writer := bufio.NewWriter(file)
 	for _, line := range lines {
-		fmt.Fprintln(writer, line)
+		if _n {
+			fmt.Fprintln(writer, line)
+		} else {
+			fmt.Fprintf(writer, "%s", line)
+		}
+
 	}
 	return writer.Flush()
 }

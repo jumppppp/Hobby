@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -16,6 +17,11 @@ import (
 
 func CSleep(num int) {
 	time.Sleep(time.Duration(num) * time.Second)
+}
+func Cls() {
+	cmd := exec.Command("cmd", "/c", "cls")
+	cmd.Stdout = os.Stdout
+	cmd.Run()
 }
 func CLogPrint(cmd string, args ...string) {
 	// 确保目标目录存在

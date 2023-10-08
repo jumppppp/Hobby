@@ -63,5 +63,8 @@ func SelectLinkDatabyUUID(UUID string, linkt *ctype.RetLink) ctype.LinkData {
 	for current.Next != nil && current.LinkData.UUID != UUID {
 		current = current.Next
 	}
+	if current.Next == nil {
+		return linkt.LinkData
+	}
 	return current.LinkData
 }
