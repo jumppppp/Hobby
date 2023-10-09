@@ -193,6 +193,9 @@ func ProcessRun(
 
 	var DDone bool
 	DDone = false
+	defer func() {
+		DDone = true
+	}()
 	pid, SOut, err := utils.RunAndGetPID(command, args...)
 
 	newPPID := fmt.Sprintf("%v#%v", PPID, pid)
@@ -217,11 +220,9 @@ func ProcessRun(
 
 		} else if n > -5 {
 			utils.LogPf("\033[34m(进程%v)\033[0m[\033[33m执行结束\033[0m]{%v}\n", index, Cmdtext)
-			DDone = true
 			break
 		} else {
 			utils.LogPf("\033[34m(进程%v)\033[0m[\033[31m执行错误\033[0m]{%v} >> %v\n", index, Cmdtext, n)
-			DDone = true
 			break
 
 		}
@@ -328,7 +329,7 @@ func LinkShell(
 		case c2 := <-govern:
 			switch c2 {
 			case "exit":
-				syscall.Exit(1)
+				syscall.Exit(999)
 			case "show":
 				utils.ShowLink(LinkT)
 			default:
@@ -345,18 +346,18 @@ func DdProcessRunStatByLink(newPPID string, OutRunStat chan *ctype.ProcessRunSta
 	ctype.ControlMain <- "HEAD"
 	Linkt := <-ctype.OutLinkShell
 	PPID := strings.Split(newPPID, "#")[0]
+	tempLink := utils.SelectLinkbyUUID(newPPID, Linkt)
+	// 第一次
+	value1, _ := tempLink.LinkData.Data.(string)
+	PID, _ := strconv.Atoi(value1)
+	path1 := tempLink.LinkData.OkData
 	for {
-
-		tempLink := utils.SelectLinkbyUUID(newPPID, Linkt)
-		// 第一次
-		value1, _ := tempLink.LinkData.Data.(string)
-		path1 := tempLink.LinkData.OkData
 		size1, modTime1, err := utils.GetFileInfo(path1)
 		if err != nil {
 			// utils.LogPf("[-]DdProcessRunStatByLink Error: %v\n", err)
 			continue
 		}
-		PID, _ := strconv.Atoi(value1)
+
 		tempRunStat1 := &ctype.ProcessRunStat{
 			PID:        PID,
 			PPID:       PPID,

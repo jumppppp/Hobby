@@ -5,7 +5,7 @@ import (
 )
 
 func InitLink() *ctype.RetLink {
-	return &ctype.RetLink{LinkData: ctype.LinkData{UUID: "HEAD", Data: 0, OkData: ""}, Next: nil, Prior: nil}
+	return &ctype.RetLink{LinkData: ctype.LinkData{UUID: "HEAD", Data: "", OkData: ""}, Next: nil, Prior: nil}
 
 }
 func AddRetLink(data ctype.LinkData, linkt *ctype.RetLink) {
