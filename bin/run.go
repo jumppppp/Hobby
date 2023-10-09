@@ -5,13 +5,10 @@ import (
 	"hobby/cplugin"
 	"hobby/ctype"
 	"hobby/utils"
-	"os"
-	"os/exec"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 )
 
@@ -47,6 +44,7 @@ func Run(args ctype.Args) {
 	InLinkData := ctype.InLinkData
 	OutLinkData := ctype.OutLinkData
 	Govern := ctype.Govern
+	ErrLink := ctype.ErrLinkShell
 	defer func() {
 		close(InLinkData)
 		close(OutLinkData)
@@ -54,8 +52,9 @@ func Run(args ctype.Args) {
 		close(InLinkShell)
 		close(OutLinkShell)
 		close(ControlMain)
+		close(ErrLink)
 	}()
-	go LinkShell(InLinkShell, OutLinkShell, ControlMain, InLinkData, OutLinkData, Govern)
+	go LinkShell(InLinkShell, OutLinkShell, ControlMain, InLinkData, OutLinkData, Govern, ErrLink)
 	//
 	// 清理屏幕
 	// go ClearSrceen(args.FlushTime * 10)
@@ -112,15 +111,15 @@ func Run(args ctype.Args) {
 	}
 }
 
-// 清理屏幕
-func ClearSrceen(num int) {
-	for {
-		cmd := exec.Command("cmd", "/c", "cls")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
-		time.Sleep(time.Duration(num) * time.Second)
-	}
-}
+// // 清理屏幕
+// func ClearSrceen(num int) {
+// 	for {
+// 		cmd := exec.Command("cmd", "/c", "cls")
+// 		cmd.Stdout = os.Stdout
+// 		cmd.Run()
+// 		time.Sleep(time.Duration(num) * time.Second)
+// 	}
+// }
 
 // 多进程结果聚合
 func ManyProcessRetCount(wg *sync.WaitGroup, WorkCount *int, pn ctype.CmdXML, t int, Touts []string) {
@@ -215,7 +214,7 @@ func ProcessRun(
 	for {
 		info, n := utils.FindProcessByPID(pid)
 		if n == 0 {
-			utils.LogPf("\033[34m(进程%v)\033[0m[\033[32m执行中...\033[0m]{%v} >> %v\n", index, Cmdtext, *info)
+			utils.LogPf("\033[34m(进程%v)\033[0m[\033[32m执行中...\033[0m]{%v} >> %+v\n", index, Cmdtext, *info)
 			// 在运行了，但是输出文件长度一直没有区别
 
 		} else if n > -5 {
@@ -291,53 +290,20 @@ func PluginRun(wg *sync.WaitGroup, mt *sync.Mutex, pn ctype.CmdXML, t int, inLin
 			// govern <- "show"
 
 		case "logprint":
+			// cmd , args
 			cplugin.CLogPrint(pn.Plugin, args...)
 			utils.LogPf("[\033[33m脚本执行结束\033[0m]{%v}\n", pn.Plugin)
+		case "request":
+			ReqDATA := &ctype.RequestToolData{}
+			ReqDATA.RespOut = make(chan *ctype.ResqData, 1024)
+			*ReqDATA.Done = false
+			go cplugin.HandleRespOut(ReqDATA)
+			cplugin.HandleRequestArgs(pn, ReqDATA, args...)
+
 		default:
 			utils.LogPf("[\033[31m脚本不存在\033[0m]{%v}\n", pn.Plugin)
 			return
 		}
-	}
-}
-
-// 链表内核
-func LinkShell(
-	inLink chan *ctype.RetLink,
-	outLink chan *ctype.RetLink,
-	control chan string,
-	inLinkData chan *ctype.LinkData,
-	outLinkData chan *ctype.LinkData,
-	govern chan string) {
-
-	LinkT := utils.InitLink()
-	for {
-		select {
-		// 写入数据
-		case link := <-inLink:
-			utils.AddRetLink(link.LinkData, LinkT)
-
-		case c1 := <-control:
-			switch control {
-			default:
-				tempLink := utils.SelectLinkbyUUID(c1, LinkT)
-				// 监测nil，不能插入空，否则管道阻塞
-				outLink <- tempLink
-
-			}
-		case ldata := <-inLinkData:
-			utils.AddRetLink(*ldata, LinkT)
-		case c2 := <-govern:
-			switch c2 {
-			case "exit":
-				syscall.Exit(999)
-			case "show":
-				utils.ShowLink(LinkT)
-			default:
-				tempLink := utils.SelectLinkbyUUID(c2, LinkT)
-				outLinkData <- &tempLink.LinkData
-			}
-		}
-		time.Sleep(100 * time.Millisecond)
 	}
 }
 
@@ -377,6 +343,8 @@ func DdProcessRunStatByLink(newPPID string, OutRunStat chan *ctype.ProcessRunSta
 
 	}
 }
+
+// 处理程序运行状态 并回显
 func HandleOutRunStat(OutRunStat chan *ctype.ProcessRunStat, DDone *bool) {
 	for {
 		if *DDone {

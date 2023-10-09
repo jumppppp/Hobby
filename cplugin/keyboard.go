@@ -54,6 +54,29 @@ func KeyBoardMain(OutKey chan *ctype.KeyBoardData, done chan bool) {
 
 }
 
+// BlinkText 在倒数第二行使用 ANSI 转义码显示闪烁的文本
+func BlinkText(text string, delayMillis int) {
+
+	// ANSI 转义码，设置倒数第二行
+	// setCursorPosition := fmt.Sprintf("\033[%d;%dH", 1, 0)
+
+	// 清空当前行
+	clearLine := "\033[2K"
+
+	// 闪烁的字符串
+	blinkingText := "\033[31m" + text + "\033[0m"
+
+	// 将光标移动到倒数第二行
+	// fmt.Print(setCursorPosition)
+
+	// 清空当前行
+	fmt.Print(clearLine)
+
+	// 打印闪烁的字符串
+	fmt.Print(blinkingText)
+
+}
+
 // 处理 监听到的字符
 func HandleKeyboardData(OutKey chan *ctype.KeyBoardData) {
 	var inputSequence string
@@ -67,7 +90,7 @@ func HandleKeyboardData(OutKey chan *ctype.KeyBoardData) {
 			excess := len(inputSequence) - 100
 			inputSequence = inputSequence[excess:]
 		}
-
+		BlinkText(inputSequence, 500)
 		switch {
 		case strings.Contains(inputSequence, "show"):
 			ctype.Govern <- "show"
@@ -79,6 +102,15 @@ func HandleKeyboardData(OutKey chan *ctype.KeyBoardData) {
 
 		case strings.Contains(inputSequence, "exit"):
 			ctype.Govern <- "exit"
+			inputSequence = ""
+		case strings.Contains(inputSequence, "shell"):
+			ctype.Govern <- "shell"
+			inputSequence = ""
+		case strings.Contains(inputSequence, "back"):
+			ctype.Govern <- "back"
+			inputSequence = ""
+		case strings.Contains(inputSequence, "save"):
+			ctype.Govern <- "save"
 			inputSequence = ""
 		default:
 

@@ -16,4 +16,6 @@ var (
 	InLinkShell  = make(chan *RetLink, 1)
 	OutLinkShell = make(chan *RetLink, 1)
 	ControlMain  = make(chan string, 1)
+	// 错误缓存
+	ErrLinkShell = make(chan string, 1024)
 )

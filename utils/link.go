@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"hobby/ctype"
 )
 
@@ -70,4 +71,15 @@ func SelectLinkbyUUID(UUID string, linkt *ctype.RetLink) *ctype.RetLink {
 		return linkt
 	}
 	return current
+}
+
+func SaveLink(linkt *ctype.RetLink) {
+	sdata := linkt
+	for sdata != nil {
+		err := WriteAppendLines([]string{fmt.Sprintf("%p >> %v", sdata, sdata)}, "./result/Save.txt", true)
+		if err != nil {
+			LogPf("Error SaveLink to file: %v", err)
+		}
+		sdata = sdata.Next
+	}
 }

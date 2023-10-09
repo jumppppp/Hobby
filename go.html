@@ -92,4 +92,13 @@
 		    {LogPrint $ddcsv1$ hello}
 		</plugin>
 	</process>
+	<process>
+		<tag>
+	        5
+	    </tag>
+		<return-mark>req1</return-mark>
+		<plugin>
+		    {request -u2f http://192.168.231.137:8080/ -o ./result/req1.txt -m get -head ./tools/head.txt -body ./tools/body.txt -timeout 10}
+		</plugin>
+	</process>
 </root>
