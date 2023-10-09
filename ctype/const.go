@@ -7,7 +7,7 @@ var (
 	KeyBoardDone = make(chan bool, 1)
 
 	// 程序状态  一个时间前一个时间后
-	OutRunStat = make(chan *ProcessRunStat, 2)
+	OutRunStat = make(chan *ProcessRunStat, 1)
 
 	InLinkData  = make(chan *LinkData, 1)
 	OutLinkData = make(chan *LinkData, 1)

@@ -297,11 +297,17 @@ func GetFileInfo(filename string) (int64, time.Time, error) {
 }
 
 // 处理程序的输出功能
-func HandelSout(Sout io.ReadCloser, Pid int, PPID string, DDone *bool) {
+func HandelSout(Sout io.ReadCloser, newPPID string, DDone *bool) {
 	// 读取命令的输出
 	buf := make([]byte, 1024)
-	outname := fmt.Sprintf("%v.txt", Pid)
-	ctype.InLinkData <- &ctype.LinkData{UUID: PPID, Data: Pid, OkData: fmt.Sprintf("./cache/%v/%v", PPID, outname)}
+
+	// c存入链表
+	PPID := strings.Split(newPPID, "#")[0]
+	SPid := strings.Split(newPPID, "#")[1]
+	outname := fmt.Sprintf("%v.txt", SPid)
+	path := strings.ReplaceAll(newPPID, "#"+SPid, "")
+	ctype.InLinkData <- &ctype.LinkData{UUID: newPPID, Data: SPid, OkData: fmt.Sprintf("./cache/%v/%v", path, outname)}
+
 	for {
 		if *DDone {
 			return
@@ -310,6 +316,8 @@ func HandelSout(Sout io.ReadCloser, Pid int, PPID string, DDone *bool) {
 		if err != nil {
 			continue
 		}
+		// 拆解
+
 		if n > 0 {
 			err = WriteCacheByUid(PPID, []string{string(buf[:n])}, outname, false, true)
 			if err != nil {

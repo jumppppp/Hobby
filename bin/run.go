@@ -1,6 +1,7 @@
 package bin
 
 import (
+	"fmt"
 	"hobby/cplugin"
 	"hobby/ctype"
 	"hobby/utils"
@@ -70,7 +71,6 @@ func Run(args ctype.Args) {
 			// 外置程序运行
 			if pn.Command != "" {
 				//多进程
-				PPID := pn.PPID
 				if pn.Thread > 1 {
 					if pn.ThreadContent != "" && pn.ThreadOut != "" {
 						Coms, Touts, err := utils.SwapThreadCommand(pn.PPID, pn.Thread, pn.ThreadContent, pn.ThreadOut, pn.Command)
@@ -80,10 +80,10 @@ func Run(args ctype.Args) {
 							return
 						}
 						var WorkCount int = pn.Thread
-						for index, pn := range Coms {
+						for index, cmdtxt := range Coms {
 							wg.Add(1)
 							// 多进程
-							go ProcessRun(wg, mt, PPID, pn, args.FlushTime, index, &WorkCount, OutLinkData, Govern, args.Ddprocess)
+							go ProcessRun(wg, mt, pn.PPID, cmdtxt, args.FlushTime, index, &WorkCount, OutLinkData, Govern, args.Ddprocess)
 						}
 						wg.Add(1)
 						// 结果聚合
@@ -97,7 +97,7 @@ func Run(args ctype.Args) {
 				} else {
 					wg.Add(1)
 					// 单进程
-					go ProcessRun(wg, mt, PPID, pn, args.FlushTime, -100, nil, OutLinkData, Govern, args.Ddprocess)
+					go ProcessRun(wg, mt, pn.PPID, pn, args.FlushTime, -100, nil, OutLinkData, Govern, args.Ddprocess)
 				}
 				// 脚本运行
 			} else if pn.Plugin != "" {
@@ -146,7 +146,7 @@ func ProcessRun(
 	wg *sync.WaitGroup,
 	mt *sync.Mutex,
 	PPID string,
-	pn interface{}, // 可以是string或者ctype.CmdXML
+	cmdtxt interface{}, // 可以是string或者ctype.CmdXML
 	t int,
 	index int, // 对于OneProcessRun为nil
 	WorkCount *int, // 对于OneProcessRun为nil
@@ -165,7 +165,7 @@ func ProcessRun(
 	var command string
 	var args []string
 	var Cmdtext string
-	switch v := pn.(type) {
+	switch v := cmdtxt.(type) {
 	case string:
 		parts := strings.Fields(v)
 		command = parts[0]
@@ -193,11 +193,16 @@ func ProcessRun(
 
 	var DDone bool
 	DDone = false
-
 	pid, SOut, err := utils.RunAndGetPID(command, args...)
-	// 处理程序的输出问题
-	go utils.HandelSout(SOut, pid, PPID, &DDone)
 
+	newPPID := fmt.Sprintf("%v#%v", PPID, pid)
+	// fmt.Println(newPPID)
+	// 处理程序的输出问题
+	go utils.HandelSout(SOut, newPPID, &DDone)
+	// 监测程序运行状态，并存到链表中
+	go DdProcessRunStatByLink(newPPID, ctype.OutRunStat, Dpt, &DDone)
+	// 处理发送过来的状态
+	go HandleOutRunStat(ctype.OutRunStat, &DDone)
 	if err != nil {
 		// 打印错误信息
 		utils.LogPf("[\033[31mError\033[0m]{%v} >> %v\n", Cmdtext, err)
@@ -209,8 +214,7 @@ func ProcessRun(
 		if n == 0 {
 			utils.LogPf("\033[34m(进程%v)\033[0m[\033[32m执行中...\033[0m]{%v} >> %v\n", index, Cmdtext, *info)
 			// 在运行了，但是输出文件长度一直没有区别
-			go DdProcessRunStatByLink(PPID, ctype.OutRunStat, Dpt, &DDone)
-			go HandleOutRunStat(ctype.OutRunStat, &DDone)
+
 		} else if n > -5 {
 			utils.LogPf("\033[34m(进程%v)\033[0m[\033[33m执行结束\033[0m]{%v}\n", index, Cmdtext)
 			DDone = true
@@ -314,13 +318,9 @@ func LinkShell(
 		case c1 := <-control:
 			switch control {
 			default:
-				tempLink := utils.SelectLinkDatabyUUID(c1, LinkT)
+				tempLink := utils.SelectLinkbyUUID(c1, LinkT)
 				// 监测nil，不能插入空，否则管道阻塞
-				if tempLink != nil {
-					outLink <- tempLink
-				} else {
-					outLink <- LinkT
-				}
+				outLink <- tempLink
 
 			}
 		case ldata := <-inLinkData:
@@ -332,13 +332,8 @@ func LinkShell(
 			case "show":
 				utils.ShowLink(LinkT)
 			default:
-				tempLink := utils.SelectLinkDatabyUUID(c2, LinkT)
-				if tempLink != nil {
-					outLinkData <- &tempLink.LinkData
-				} else {
-					outLinkData <- &ctype.LinkData{}
-				}
-
+				tempLink := utils.SelectLinkbyUUID(c2, LinkT)
+				outLinkData <- &tempLink.LinkData
 			}
 		}
 		time.Sleep(100 * time.Millisecond)
@@ -346,49 +341,39 @@ func LinkShell(
 }
 
 // 监测程序运行状态使用链表
-func DdProcessRunStatByLink(UUID string, OutRunStat chan *ctype.ProcessRunStat, num int, DDone *bool) {
+func DdProcessRunStatByLink(newPPID string, OutRunStat chan *ctype.ProcessRunStat, num int, DDone *bool) {
 	ctype.ControlMain <- "HEAD"
 	Linkt := <-ctype.OutLinkShell
+	PPID := strings.Split(newPPID, "#")[0]
 	for {
-		if *DDone {
-			return
-		}
-		tempLink := utils.SelectLinkDatabyUUID(UUID, Linkt)
+
+		tempLink := utils.SelectLinkbyUUID(newPPID, Linkt)
 		// 第一次
-		value1, _ := tempLink.LinkData.Data.(int)
+		value1, _ := tempLink.LinkData.Data.(string)
 		path1 := tempLink.LinkData.OkData
 		size1, modTime1, err := utils.GetFileInfo(path1)
 		if err != nil {
 			// utils.LogPf("[-]DdProcessRunStatByLink Error: %v\n", err)
 			continue
 		}
+		PID, _ := strconv.Atoi(value1)
 		tempRunStat1 := &ctype.ProcessRunStat{
-			PID:        value1,
-			UUID:       UUID,
+			PID:        PID,
+			PPID:       PPID,
 			Path:       path1,
 			ChangeTime: modTime1.Format("2006-01-02 15:04:05"),
 			Length:     int(size1),
 		}
-		time.Sleep(time.Duration(num) * time.Second)
-		// 第二次
-		value2, _ := tempLink.LinkData.Data.(int)
-		path2 := tempLink.LinkData.OkData
-		size2, modTime2, err := utils.GetFileInfo(path1)
-		if err != nil {
-			// utils.LogPf("[-]DdProcessRunStatByLink Error: %v\n", err)
-			continue
-		}
-		tempRunStat2 := &ctype.ProcessRunStat{
-			PID:        value2,
-			UUID:       UUID,
-			Path:       path2,
-			ChangeTime: modTime2.Format("2006-01-02 15:04:05"),
-			Length:     int(size2),
-		}
 		// 发送出去
 		OutRunStat <- tempRunStat1
-		OutRunStat <- tempRunStat2
-		time.Sleep(time.Duration(num) * time.Second)
+
+		for i := 0; i < num; i++ {
+			if *DDone {
+				return
+			}
+			time.Sleep(time.Second)
+		}
+
 	}
 }
 func HandleOutRunStat(OutRunStat chan *ctype.ProcessRunStat, DDone *bool) {
@@ -398,8 +383,8 @@ func HandleOutRunStat(OutRunStat chan *ctype.ProcessRunStat, DDone *bool) {
 		}
 		select {
 		case RunStat := <-OutRunStat:
-			utils.LogPf("\033[032mPID:[%v]\033[0m\nUUID:[%v]\nPath:[%v]\nModify:[%v]\nLength:[%v]\n\n",
-				RunStat.PID, RunStat.UUID, RunStat.Path, RunStat.ChangeTime, RunStat.Length)
+			utils.LogPf("\033[032mPID:[%v]\033[0m\nPPID:[%v]\nPath:[%v]\nModify:[%v]\nLength:[%v]\n\n",
+				RunStat.PID, RunStat.PPID, RunStat.Path, RunStat.ChangeTime, RunStat.Length)
 		default:
 
 		}

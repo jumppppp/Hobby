@@ -44,7 +44,7 @@ type KeyBoardData struct {
 }
 type ProcessRunStat struct {
 	PID        int
-	UUID       string
+	PPID       string
 	Path       string
 	ChangeTime string
 	Length     int
