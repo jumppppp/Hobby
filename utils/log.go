@@ -7,6 +7,15 @@ import (
 )
 
 func Log_init() {
+	// 创建一个日志文件夹（如果不存在）
+	logDir := "./result"
+	if _, err := os.Stat(logDir); os.IsNotExist(err) {
+		err := os.MkdirAll(logDir, 0755)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	// 创建一个日志文件
 	file, err := os.OpenFile("./result/app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
