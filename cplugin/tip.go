@@ -46,7 +46,7 @@ func CLogPrint(cmd string, args ...string) {
 	currentTime := time.Now().Format("2006-01-02 15:04:05")
 
 	// 写入日期和参数
-	fmt.Fprintf(multi, "\t**HOBBY**(%s)[%v] >>", currentTime, cmd)
+	fmt.Fprintf(multi, "\033[031m**HOBBY**\033[0m(%s)[%v] >>", currentTime, cmd)
 	for _, arg := range args {
 		fmt.Fprintf(multi, " %s |", arg)
 	}
