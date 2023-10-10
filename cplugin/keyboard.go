@@ -55,7 +55,7 @@ func KeyBoardMain(OutKey chan *ctype.KeyBoardData, done chan bool) {
 }
 
 // BlinkText 在倒数第二行使用 ANSI 转义码显示闪烁的文本
-func BlinkText(text string, delayMillis int) {
+func BlinkText(text string) {
 
 	// ANSI 转义码，设置倒数第二行
 	// setCursorPosition := fmt.Sprintf("\033[%d;%dH", 1, 0)
@@ -90,7 +90,7 @@ func HandleKeyboardData(OutKey chan *ctype.KeyBoardData) {
 			excess := len(inputSequence) - 100
 			inputSequence = inputSequence[excess:]
 		}
-		BlinkText(inputSequence, 500)
+		BlinkText(inputSequence)
 		switch {
 		case strings.Contains(inputSequence, "show"):
 			ctype.Govern <- "show"

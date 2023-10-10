@@ -59,7 +59,7 @@ func LinkShell(
 				outLinkData <- &tempLink.LinkData
 			}
 		}
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 func GoLinkShell(linkS *ctype.LinkShellInOutErr) {
