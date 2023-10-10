@@ -24,13 +24,13 @@ func ShowLink(linkt *ctype.RetLink) {
 	sdata := linkt
 	for sdata != nil {
 
-		LogPf("%p,%v\n", sdata, sdata)
+		LogPf(0, "%p,%v\n", sdata, sdata)
 		sdata = sdata.Next
 	}
 }
 func AddIndexLink(data ctype.LinkData, index int, linkt *ctype.RetLink) {
 	if index <= 0 {
-		LogPf("[-]Index should be a positive integer")
+		LogPf(0, "[-]Index should be a positive integer")
 		return
 	}
 	current := linkt
@@ -78,7 +78,7 @@ func SaveLink(linkt *ctype.RetLink) {
 	for sdata != nil {
 		err := WriteAppendLines([]string{fmt.Sprintf("%p >> %v", sdata, sdata)}, "./result/Save.txt", true)
 		if err != nil {
-			LogPf("Error SaveLink to file: %v", err)
+			LogPf(0, "Error SaveLink to file: %v", err)
 		}
 		sdata = sdata.Next
 	}

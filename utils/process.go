@@ -321,7 +321,7 @@ func HandelSout(Sout io.ReadCloser, newPPID string, DDone *bool) {
 		if n > 0 {
 			err = WriteCacheByUid(PPID, []string{string(buf[:n])}, outname, false, true)
 			if err != nil {
-				LogPf("Error writing to file: %v - %v\n", outname, err)
+				LogPf(0, "Error writing to file: %v - %v\n", outname, err)
 			}
 		}
 	}

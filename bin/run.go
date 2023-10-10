@@ -16,7 +16,7 @@ func Run(args ctype.Args) {
 	// 1  读取配置文件
 	hobby, err := utils.ReadHobby(args.HobbyPath)
 	if err != nil {
-		utils.LogPf("[-]读取失败：%v\n", err)
+		utils.LogPf(0, "[-]读取失败：%v\n", err)
 		return
 	}
 	tags := make([]int, 0, len(hobby))
@@ -75,7 +75,7 @@ func Run(args ctype.Args) {
 						Coms, Touts, err := utils.SwapThreadCommand(pn.PPID, pn.Thread, pn.ThreadContent, pn.ThreadOut, pn.Command)
 
 						if err != nil {
-							utils.LogPf("[\033[31m进程转换错误\033[0m]{%v} >> %v\n", pn.Command, err)
+							utils.LogPf(0, "[\033[31m进程转换错误\033[0m]{%v} >> %v\n", pn.Command, err)
 							return
 						}
 						var WorkCount int = pn.Thread
@@ -89,7 +89,7 @@ func Run(args ctype.Args) {
 						go ManyProcessRetCount(wg, &WorkCount, pn, args.FlushTime, Touts)
 
 					} else {
-						utils.LogPf("[\033[31m进程错误\033[0m]{%v} >> 缺失必要值 Thread-Content \n", pn.Command)
+						utils.LogPf(0, "[\033[31m进程错误\033[0m]{%v} >> 缺失必要值 Thread-Content \n", pn.Command)
 						return
 					}
 					// 单进程
@@ -128,10 +128,10 @@ func ManyProcessRetCount(wg *sync.WaitGroup, WorkCount *int, pn ctype.CmdXML, t 
 		if *WorkCount == 0 {
 			err := utils.AssembleThreadOut(Touts, pn.ThreadOut)
 			if err != nil {
-				utils.LogPf("[\033[31m结果聚合失败\033[0m]{%v} >> %v\n", pn.Command, err)
+				utils.LogPf(0, "[\033[31m结果聚合失败\033[0m]{%v} >> %v\n", pn.Command, err)
 				return
 			}
-			utils.LogPf("[\033[33m结果聚合完成\033[0m]{%v}\n", pn.Command)
+			utils.LogPf(0, "[\033[33m结果聚合完成\033[0m]{%v}\n", pn.Command)
 			break
 
 		}
@@ -207,21 +207,21 @@ func ProcessRun(
 	go HandleOutRunStat(ctype.OutRunStat, &DDone)
 	if err != nil {
 		// 打印错误信息
-		utils.LogPf("[\033[31mError\033[0m]{%v} >> %v\n", Cmdtext, err)
+		utils.LogPf(0, "[\033[31mError\033[0m]{%v} >> %v\n", Cmdtext, err)
 		return
 	}
 
 	for {
 		info, n := utils.FindProcessByPID(pid)
 		if n == 0 {
-			utils.LogPf("\033[34m(进程%v)\033[0m[\033[32m执行中...\033[0m]{%v} >> %+v\n", index, Cmdtext, *info)
+			utils.LogPf(0, "\033[34m(进程%v)\033[0m[\033[32m执行中...\033[0m]{%v} >> %+v\n", index, Cmdtext, *info)
 			// 在运行了，但是输出文件长度一直没有区别
 
 		} else if n > -5 {
-			utils.LogPf("\033[34m(进程%v)\033[0m[\033[33m执行结束\033[0m]{%v}\n", index, Cmdtext)
+			utils.LogPf(0, "\033[34m(进程%v)\033[0m[\033[33m执行结束\033[0m]{%v}\n", index, Cmdtext)
 			break
 		} else {
-			utils.LogPf("\033[34m(进程%v)\033[0m[\033[31m执行错误\033[0m]{%v} >> %v\n", index, Cmdtext, n)
+			utils.LogPf(0, "\033[34m(进程%v)\033[0m[\033[31m执行错误\033[0m]{%v} >> %v\n", index, Cmdtext, n)
 			break
 
 		}
@@ -259,32 +259,32 @@ func PluginRun(wg *sync.WaitGroup, mt *sync.Mutex, pn ctype.CmdXML, t int, inLin
 		case "csvbyname2txt":
 			_, err := cplugin.ReadCSVbyName(args[0], args[1], args[2])
 			if err != nil {
-				utils.LogPf("[\033[31m脚本执行错误\033[0m]{%v} >> %v\n", pn.Plugin, err)
+				utils.LogPf(0, "[\033[31m脚本执行错误\033[0m]{%v} >> %v\n", pn.Plugin, err)
 			} else {
-				utils.LogPf("[\033[33m脚本执行结束\033[0m]{%v}\n", pn.Plugin)
+				utils.LogPf(0, "[\033[33m脚本执行结束\033[0m]{%v}\n", pn.Plugin)
 			}
 		case "csvbycol2txt":
 			column, _ := strconv.Atoi(args[1])
 			_, err := cplugin.ReadCSVbyCol(args[0], column, args[2])
 			if err != nil {
-				utils.LogPf("[\033[31m脚本执行错误\033[0m]{%v} >> %v\n", pn.Plugin, err)
+				utils.LogPf(0, "[\033[31m脚本执行错误\033[0m]{%v} >> %v\n", pn.Plugin, err)
 			} else {
-				utils.LogPf("[\033[33m脚本执行结束\033[0m]{%v}\n", pn.Plugin)
+				utils.LogPf(0, "[\033[33m脚本执行结束\033[0m]{%v}\n", pn.Plugin)
 			}
 		case "sleep":
 			num, _ := strconv.Atoi(args[0])
 			cplugin.CSleep(num)
-			utils.LogPf("[\033[33m脚本执行结束\033[0m]{%v}\n", pn.Plugin)
+			utils.LogPf(0, "[\033[33m脚本执行结束\033[0m]{%v}\n", pn.Plugin)
 		case "ddcsv":
 			num, _ := strconv.Atoi(args[2])
 			fname, err := cplugin.MonitorDirCsv(args[0], args[1], num)
 			RetLink := ctype.LinkData{UUID: pn.RetMark, OkData: fname}
 			inLinkData <- &RetLink
 			if err != nil {
-				utils.LogPf("[\033[31m脚本执行错误\033[0m]{%v} >> %v\n", pn.Plugin, err)
+				utils.LogPf(0, "[\033[31m脚本执行错误\033[0m]{%v} >> %v\n", pn.Plugin, err)
 
 			} else {
-				utils.LogPf("[\033[33m脚本执行结束\033[0m]{%v} >> %v(%v)\n", pn.Plugin, pn.RetMark, fname)
+				utils.LogPf(0, "[\033[33m脚本执行结束\033[0m]{%v} >> %v(%v)\n", pn.Plugin, pn.RetMark, fname)
 			}
 			// test
 			// govern <- "show"
@@ -292,16 +292,23 @@ func PluginRun(wg *sync.WaitGroup, mt *sync.Mutex, pn ctype.CmdXML, t int, inLin
 		case "logprint":
 			// cmd , args
 			cplugin.CLogPrint(pn.Plugin, args...)
-			utils.LogPf("[\033[33m脚本执行结束\033[0m]{%v}\n", pn.Plugin)
+			utils.LogPf(0, "[\033[33m脚本执行结束\033[0m]{%v}\n", pn.Plugin)
 		case "request":
-			ReqDATA := &ctype.RequestToolData{}
-			ReqDATA.RespOut = make(chan *ctype.ResqData, 1024)
-			*ReqDATA.Done = false
+			RDone := false
+			ReqDATA := &ctype.RequestToolData{Req: &ctype.RequestConfig{Headers: make(map[string]string)}, RespOut: make(chan *ctype.ResqData, 1024), Done: &RDone}
+			// 启动resq接受结果服务
 			go cplugin.HandleRespOut(ReqDATA)
-			cplugin.HandleRequestArgs(pn, ReqDATA, args...)
+			// 开始启动扫描并把结果放入到管道中
+			err := cplugin.HandleRequestArgs(pn, ReqDATA, args...)
+			close(ReqDATA.RespOut)
+			if err != nil {
+				utils.LogPf(0, "[\033[31m脚本执行错误\033[0m]{%v} >> %v\n", pn.Plugin, err)
+			} else {
+				utils.LogPf(0, "[\033[33m脚本执行结束\033[0m]{%v}\n", pn.Plugin)
+			}
 
 		default:
-			utils.LogPf("[\033[31m脚本不存在\033[0m]{%v}\n", pn.Plugin)
+			utils.LogPf(0, "[\033[31m脚本不存在\033[0m]{%v}\n", pn.Plugin)
 			return
 		}
 	}
@@ -352,7 +359,7 @@ func HandleOutRunStat(OutRunStat chan *ctype.ProcessRunStat, DDone *bool) {
 		}
 		select {
 		case RunStat := <-OutRunStat:
-			utils.LogPf("\033[032mPID:[%v]\033[0m\nPPID:[%v]\nPath:[%v]\nModify:[%v]\nLength:[%v]\n\n",
+			utils.LogPf(0, "\033[032mPID:[%v]\033[0m\nPPID:[%v]\nPath:[%v]\nModify:[%v]\nLength:[%v]\n\n",
 				RunStat.PID, RunStat.PPID, RunStat.Path, RunStat.ChangeTime, RunStat.Length)
 		default:
 

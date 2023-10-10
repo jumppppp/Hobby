@@ -18,7 +18,7 @@ try:
         file_content = source_file.read()
         time.sleep(5)
     # 打开输出文件并将内容写入
-    time.sleep(20)
+
     with open(args.output, 'w') as output_file:
         output_file.write(file_content)
 

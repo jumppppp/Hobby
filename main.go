@@ -13,8 +13,9 @@ func showPluginInfo() {
 	csvbycol2txt	>>> {csvbycol2txt xxx.csv 2 xxx.txt} (将fofa.csv中第2列的内容导出（已去重）fofa.txt)
 	csvbyname2txt	>>> {csvbyname2txt xxx.csv domain xxx.txt} (将fofa.csv中名为domain列的内容导出fofa.txt)
 	sleep	>>> {sleep 5} (休眠n秒)
-	ddcsv	>>> {ddcsv ./xxx/ 1k 5} (监测目标文件中是否出现大于1kb的csv文件，超时5s)
-	logprint	>>> {logprint $ddcsv1$ xxx xxx} (输出脚本变量或字符串到out.txt中以及输出到屏幕上)`)
+	ddcsv	>>> {ddcsv ./xxx/ 1k 5} (监测目标文件中是否出现大于1kb的csv文件 超时5s)
+	logprint	>>> {logprint $ddcsv1$ xxx xxx} (输出脚本变量或字符串到out.txt中以及输出到屏幕上)
+	request	>>> {request -u http://xxx/ -f ./xxx.txt [-t] 10 [-head] ./xxx/head [-body] ./xxx/body [-timeout] 10 [-m] GET -o xxx.csv} (http请求 []为可选参数 -m默认GET -t默认10 -u/-f只能选择其一 -timeout默认10)`)
 	fmt.Println("\n")
 
 	utils.ShowPlugin()

@@ -74,17 +74,17 @@ func GoLinkShell(linkS *ctype.LinkShellInOutErr) {
 	// 创建一个新的文件来作为新的stdout
 	newStdout, err := os.OpenFile(fmt.Sprintf("./cache/%v/linkout", uid), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		utils.LogPf("Error creating new stdout:%v\n", err)
+		utils.LogPf(0, "Error creating new stdout:%v\n", err)
 		return
 	}
 	newStdin, err := os.OpenFile(fmt.Sprintf("./cache/%v/linkin", uid), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		utils.LogPf("Error creating new stdout:%v\n", err)
+		utils.LogPf(0, "Error creating new stdout:%v\n", err)
 		return
 	}
 	newStderr, err := os.OpenFile(fmt.Sprintf("./cache/%v/linkerr", uid), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		utils.LogPf("Error creating new stdout:%v\n", err)
+		utils.LogPf(0, "Error creating new stdout:%v\n", err)
 		return
 	}
 
@@ -96,7 +96,7 @@ func GoLinkShell(linkS *ctype.LinkShellInOutErr) {
 	linkS.LinkOut["out1"] = newStdout
 	linkS.LinkIn["in1"] = newStdin
 	linkS.LinkErr["err1"] = newStderr
-	utils.LogPf("\033[031m[+]Go LinkShell\033[0m\n")
+	utils.LogPf(0, "\033[031m[+]Go LinkShell\033[0m\n")
 
 }
 func BackLinkShell(linkS *ctype.LinkShellInOutErr) {
@@ -109,5 +109,5 @@ func BackLinkShell(linkS *ctype.LinkShellInOutErr) {
 	linkS.LinkOut["out1"].Close()
 	linkS.LinkOut["in1"].Close()
 	linkS.LinkOut["err1"].Close()
-	utils.LogPf("\033[031m[+]Back Shell\033[0m\n")
+	utils.LogPf(0, "\033[031m[+]Back Shell\033[0m\n")
 }

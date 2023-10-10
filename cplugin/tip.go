@@ -83,7 +83,7 @@ func MonitorDirCsv(dir string, maxSize string, timeout int) (findName string, er
 						// 检查文件大小
 						fileInfo, err := os.Stat(event.Name)
 						if err != nil {
-							utils.LogPf("[-]Error stating file: %v\n", err)
+							utils.LogPf(0, "[-]Error stating file: %v\n", err)
 							continue
 						}
 						if fileInfo.Size() > maxSize64 {
