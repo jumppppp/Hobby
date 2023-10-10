@@ -9,15 +9,7 @@
 	<return-mark></return-mark>接受脚本的返回值，在程序和脚本中使用$xxx$使用
 </process>   -->
 <root>
-	<process>
-		<tag>
-	        1
-	    </tag>
-		<return-mark>req1</return-mark>
-		<plugin>
-		    {request -f url.txt -t 20 -o ./result/req1.csv -m get -timeout 1}
-		</plugin>
-	</process>
+
 	<process>
 	    <tag>
 	        1
@@ -101,5 +93,38 @@
 		    {LogPrint $ddcsv1$ hello}
 		</plugin>
 	</process>
+	<process>
+		<tag>
+	        5
+	    </tag>
+		<return-mark>req1</return-mark>
+		<plugin>
+		    {request -f url.txt -t 20 -o ./result/req1.csv -m get -timeout 1}
+		</plugin>
+	</process>
+	<process>
+		<tag>
+	        6
+	    </tag>
+		<plugin>
+		    {LogPrint $ddcsv1$ $req1$ hello}
+		</plugin>
+	</process>
+	<process>
+	    <tag>
+	        7
+	    </tag>
+		<thread>
+			1
+		</thread>
+		<thread-content>
 
+		</thread-content>
+		<thread-out>
+
+		</thread-out>
+		<cmd>
+		    python g1.py -t 5
+		</cmd>
+	</process>
 </root>

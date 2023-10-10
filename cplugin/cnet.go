@@ -236,13 +236,13 @@ func HandleRequestArgs(cmd ctype.CmdXML, ReqDATA *ctype.RequestToolData, args ..
 
 	} else {
 		ptresq, body, err := DoRequest(client, *ReqDATA.Req, ReqDATA.ThChan)
-		TempResq := ctype.ResqData{PtResq: ptresq, Body: body, Err: err}
-		ReqDATA.RespOut <- &TempResq
+
 		if err != nil {
 			utils.LogPf(0, "\033[031m[执行错误]\033[0m{%v} >> ERR:%v\n", cmd.Plugin, err)
 
 		} else {
-
+			TempResq := ctype.ResqData{PtResq: ptresq, Body: body, Err: err}
+			ReqDATA.RespOut <- &TempResq
 			utils.LogPf(0, "\033[033m[执行中]\033[0m{%v} >> CODE:%v\n", cmd.Plugin, ptresq.StatusCode)
 		}
 	}
@@ -259,13 +259,13 @@ func ManyRunReq(client *http.Client, config ctype.RequestConfig, ReqDATA *ctype.
 	}()
 
 	ptresq, body, err := DoRequest(client, config, ReqDATA.ThChan)
-	TempResq := ctype.ResqData{PtResq: ptresq, Body: body, Err: err}
-	ReqDATA.RespOut <- &TempResq
+
 	if err != nil {
 		utils.LogPf(0, "\033[032m(线程%v)\033[0m\033[031m[执行错误]\033[0m{%v} >> ERR:%v\n", index, cmdtxt, err)
 
 	} else {
-
+		TempResq := ctype.ResqData{PtResq: ptresq, Body: body, Err: err}
+		ReqDATA.RespOut <- &TempResq
 		utils.LogPf(0, "\033[032m(线程%v)\033[0m\033[033m[执行中]\033[0m{%v} >> CODE:%v\n", index, cmdtxt, ptresq.StatusCode)
 	}
 

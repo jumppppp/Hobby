@@ -247,13 +247,14 @@ func PluginRun(wg *sync.WaitGroup, mt *sync.Mutex, pn ctype.CmdXML, t int, inLin
 				mt.Lock()
 				govern <- inner
 				RetLink := <-outLinkData
+				// fmt.Printf("%+v >> %+v\n", inner, RetLink)
 				mt.Unlock()
 				// 输出或使用替换后的值
 				args[i] = RetLink.OkData
 
 			}
 		}
-
+		// fmt.Println(args)
 		switch command {
 		// 选择脚本
 		case "csvbyname2txt":

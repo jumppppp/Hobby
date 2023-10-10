@@ -66,8 +66,8 @@ func SelectLinkbyUUID(UUID string, linkt *ctype.RetLink) *ctype.RetLink {
 	for current.Next != nil && current.LinkData.UUID != UUID {
 		current = current.Next
 	}
-	if current.Next == nil {
-		// 如果为最后一个则返回头节点
+	if current.Next == nil && current.LinkData.UUID != UUID {
+		// 如果为最后一个且不是想要的那个节点则返回头节点
 		return linkt
 	}
 	return current
