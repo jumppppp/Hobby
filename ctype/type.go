@@ -96,3 +96,32 @@ type RequestToolData struct {
 	RespOut chan *ResqData
 	Done    *bool
 }
+
+// ProbeTarget represents an IP address and port to probe.
+type ProbeTarget struct {
+	IP   string
+	Port string
+}
+
+// ProbeResult represents the result of a probe.
+type ProbeResult struct {
+	Target   ProbeTarget
+	IsOpen   bool
+	Err      error
+	Response []byte
+}
+
+// Socket工具内容
+type SocketToolData struct {
+	Req        *ProbeTarget
+	TimeOut    time.Duration
+	SendStream map[string][]byte
+	IPs        []string
+	Ports      []string
+	Out        string
+	RetM       string
+	Thread     int
+	ThChan     chan bool
+	RespOut    chan *ProbeResult
+	Done       *bool
+}

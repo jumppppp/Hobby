@@ -121,7 +121,7 @@ func go1() {
 	cancel()                    // 取消 Context，触发 ctx.Done() 信号
 	time.Sleep(1 * time.Second) // 等待 goroutine 结束
 }
-func main() {
+func keyBoard() {
 	OutBoardData := make(chan *ctype.KeyBoardData, 128)
 	done := make(chan bool, 1)
 	go cplugin.KeyBoardMain(OutBoardData, done)
@@ -134,4 +134,9 @@ func main() {
 		}
 
 	}
+}
+func main() {
+	tar := ctype.ProbeTarget{"192.168.231.137", "110"}
+	ok := cplugin.Probe(tar, 10*time.Second, ctype.HTTP_("192.168.231.137", "25"))
+	fmt.Println(string(ok.Response))
 }

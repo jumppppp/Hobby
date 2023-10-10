@@ -9,10 +9,18 @@
 	<return-mark></return-mark>接受脚本的返回值，在程序和脚本中使用$xxx$使用
 </process>   -->
 <root>
-
 	<process>
 	    <tag>
 	        1
+	    </tag>
+		<return-mark>sock1</return-mark>
+		<plugin>
+		    {socket -f ./ip.txt -p 22 -o ./result/sock1.csv -w root -t 100 -timeout 1}
+		</plugin>
+	</process>
+	<process>
+	    <tag>
+	        2
 	    </tag>
 		<thread>
 			5
@@ -29,7 +37,7 @@
 	</process>
 	<process>
 	    <tag>
-	        1
+	        2
 	    </tag>
 		<thread>
 			1
@@ -46,7 +54,7 @@
 	</process>
 	<process>
 		<tag>
-			2
+			3
 		</tag>
 		<plugin>
 			{csvbyname2txt ip_fofa_output.csv domain fofa.txt}
@@ -54,7 +62,7 @@
 	</process>
 	<process>
 	    <tag>
-	        2
+	        3
 	    </tag>
 		<plugin>
 		    {csvbycol2txt ip_fofa_output.csv 1 fofa2.txt}
@@ -62,7 +70,7 @@
 	</process>
 	<process>
 	    <tag>
-	        3
+	        4
 	    </tag>
 		<return-mark>ddcsv1</return-mark>
 		<plugin>
@@ -71,7 +79,7 @@
 	</process>
 	<process>
 	    <tag>
-	        3
+	        4
 	    </tag>
 		<plugin>
 		    {sleep 5}
@@ -79,7 +87,7 @@
 	</process>
 	<process>
 		<tag>
-	        4
+	        5
 	    </tag>
 		<cmd>
 		    python g3.py -f $ddcsv1$
@@ -87,7 +95,7 @@
 	</process>
 	<process>
 		<tag>
-	        4
+	        5
 	    </tag>
 		<plugin>
 		    {LogPrint $ddcsv1$ hello}
@@ -95,21 +103,14 @@
 	</process>
 	<process>
 		<tag>
-	        5
+	        6
 	    </tag>
 		<return-mark>req1</return-mark>
 		<plugin>
 		    {request -f url.txt -t 20 -o ./result/req1.csv -m get -timeout 1}
 		</plugin>
 	</process>
-	<process>
-		<tag>
-	        6
-	    </tag>
-		<plugin>
-		    {LogPrint $ddcsv1$ $req1$ hello}
-		</plugin>
-	</process>
+
 	<process>
 	    <tag>
 	        7
@@ -126,5 +127,14 @@
 		<cmd>
 		    python g1.py -t 5
 		</cmd>
+	</process>
+
+	<process>
+		<tag>
+	        8
+	    </tag>
+		<plugin>
+		    {LogPrint $ddcsv1$ $req1$ $sock1$ hello}
+		</plugin>
 	</process>
 </root>

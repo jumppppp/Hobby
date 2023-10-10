@@ -307,6 +307,19 @@ func PluginRun(wg *sync.WaitGroup, mt *sync.Mutex, pn ctype.CmdXML, t int, inLin
 			} else {
 				utils.LogPf(0, "[\033[33m脚本执行结束\033[0m]{%v}\n", pn.Plugin)
 			}
+		case "socket":
+			SDone := false
+			SocketDATA := &ctype.SocketToolData{Req: &ctype.ProbeTarget{}, RespOut: make(chan *ctype.ProbeResult, 1024), Done: &SDone}
+			// 启动resq接受结果服务
+			go cplugin.HandleSocketRespOut(SocketDATA)
+			// 开始启动扫描并把结果放入到管道中
+			err := cplugin.HandleSocketArgs(pn, SocketDATA, args...)
+			close(SocketDATA.RespOut)
+			if err != nil {
+				utils.LogPf(0, "[\033[31m脚本执行错误\033[0m]{%v} >> %v\n", pn.Plugin, err)
+			} else {
+				utils.LogPf(0, "[\033[33m脚本执行结束\033[0m]{%v}\n", pn.Plugin)
+			}
 
 		default:
 			utils.LogPf(0, "[\033[31m脚本不存在\033[0m]{%v}\n", pn.Plugin)

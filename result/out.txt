@@ -29,3 +29,7 @@
 	**HOBBY**(2023-10-10 11:30:25)[LogPrint $ddcsv1$ $req1$ hello] >>  |  | hello |
 	**HOBBY**(2023-10-10 11:34:36)[LogPrint $ddcsv1$ hello] >>  | hello |
 	**HOBBY**(2023-10-10 11:34:51)[LogPrint $ddcsv1$ $req1$ hello] >>  | ./result/req1.csv | hello |
+[031m**HOBBY**[0m(2023-10-10 15:16:28)[LogPrint $ddcsv1$ hello] >>  | hello |
+[031m**HOBBY**[0m(2023-10-10 15:16:47)[LogPrint $ddcsv1$ $req1$ $sock1$ hello] >>  | ./result/req1.csv | sock1.csv | hello |
+[031m**HOBBY**[0m(2023-10-10 15:50:24)[LogPrint $ddcsv1$ hello] >>  | hello |
+[031m**HOBBY**[0m(2023-10-10 15:50:43)[LogPrint $ddcsv1$ $req1$ $sock1$ hello] >>  | ./result/req1.csv | ./result/sock1.csv | hello |
